@@ -1,0 +1,168 @@
+import React, { useState } from 'react';
+import { 
+  Bot, Send, Paperclip, BarChart3, 
+  FileSearch, ShieldAlert, Sparkles, 
+  ChevronDown, Menu, Globe 
+} from 'lucide-react';
+
+// 模拟配色与样式常量
+const styles = {
+  glass: "bg-slate-900/80 backdrop-blur-xl border border-slate-700/50",
+  primaryGradient: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500",
+  textGradient: "bg-clip-text text-transparent bg-gradient-to-r from-blue-100 to-white",
+  card: "bg-slate-800/50 border border-slate-700 hover:border-blue-500/50 transition-all duration-300",
+};
+
+const GovTechUI = () => {
+  const [selectedModel, setSelectedModel] = useState("Gov-Brain Ultra v2.0");
+  const [input, setInput] = useState("");
+  const [mode, setMode] = useState("chat"); // chat, polish, search, audit
+
+  return (
+    <div className="flex h-screen w-full bg-[#0B1120] text-slate-200 font-sans selection:bg-blue-500/30">
+      
+      {/* --- 左侧导航舱 (Sidebar) --- */}
+      <aside className={`w-20 lg:w-64 flex-shrink-0 flex flex-col justify-between p-4 ${styles.glass} border-r-0`}>
+        <div>
+          {/* Logo Area */}
+          <div className="flex items-center gap-3 mb-8 px-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Bot className="text-white w-5 h-5" />
+            </div>
+            <span className={`font-bold text-lg tracking-wider hidden lg:block ${styles.textGradient}`}>
+              政务智脑
+            </span>
+          </div>
+
+          {/* Navigation Modules */}
+          <nav className="space-y-2">
+            <NavItem icon={<Sparkles />} label="智能润色" active={mode === 'polish'} onClick={() => setMode('polish')} />
+            <NavItem icon={<FileSearch />} label="文献调研" active={mode === 'search'} onClick={() => setMode('search')} />
+            <NavItem icon={<ShieldAlert />} label="合规审查" active={mode === 'audit'} onClick={() => setMode('audit')} />
+            <NavItem icon={<Globe />} label="舆情监测" active={mode === 'opinion'} onClick={() => setMode('opinion')} />
+          </nav>
+        </div>
+
+        {/* System Status */}
+        <div className="hidden lg:block px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div className="text-xs text-slate-400 mb-1">System Status</div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-mono text-emerald-400">API Connected</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* --- 主工作区 (Main) --- */}
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        
+        {/* 顶部状态栏 (Header) */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-[#0B1120]/90 backdrop-blur-sm z-10">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-400">当前任务模型：</span>
+            {/* Model Selector Interface */}
+            <button className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 transition-colors text-xs font-mono text-blue-300">
+              {selectedModel}
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex items-center gap-4">
+             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/30 text-blue-400 border border-blue-800">SECRET-LEVEL: INTERNAL</span>
+          </div>
+        </header>
+
+        {/* 对话流区域 (Scrollable Chat) */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-700">
+          
+          {/* Welcome State (If empty) */}
+          <div className="h-full flex flex-col items-center justify-center opacity-80">
+            <h1 className="text-3xl font-light mb-8 text-center">
+              <span className="block text-slate-500 text-sm mb-2 uppercase tracking-[0.3em]">AI Governance Assistant</span>
+              您需要处理什么公务？
+            </h1>
+            <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
+              <QuickAction title="政策文件润色" desc="上传草稿，优化公文措辞与格式规范" icon={<Sparkles className="w-4 h-4 text-amber-400"/>} />
+              <QuickAction title="相关法规检索" desc="基于语义库深度检索历史关联政策" icon={<FileSearch className="w-4 h-4 text-blue-400"/>} />
+              <QuickAction title="漏洞风险排查" desc="逻辑自洽性检查与法律冲突预警" icon={<ShieldAlert className="w-4 h-4 text-red-400"/>} />
+              <QuickAction title="实时舆情快报" desc="全网关键词热度趋势与情感分析" icon={<BarChart3 className="w-4 h-4 text-emerald-400"/>} />
+            </div>
+          </div>
+
+          {/* Example User Message */}
+          {/* <MessageBubble isUser={true} content="帮我查询一下关于《数字经济发展规划》的最新舆情反馈，并检查其中关于数据安全的条款是否有遗漏。" /> */}
+          
+          {/* Example AI Response */}
+          {/* <MessageBubble isUser={false} content="..." /> */}
+
+        </div>
+
+        {/* 底部输入指令台 (Input Command Center) */}
+        <div className="p-6 pt-2">
+          <div className={`relative rounded-xl border border-slate-600/50 bg-slate-800/40 backdrop-blur-md shadow-2xl transition-all focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20`}>
+            
+            {/* Input Tools */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
+              <ToolButton icon={<Paperclip />} tooltip="上传红头文件/资料" />
+              <div className="h-4 w-[1px] bg-white/10 mx-1"></div>
+              <span className="text-xs text-slate-500">Mode: </span>
+              <span className="text-xs text-blue-400 font-mono bg-blue-500/10 px-1.5 py-0.5 rounded">Auto-Reasoning</span>
+            </div>
+
+            <textarea 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="在此输入指令，或按 '/' 唤起专业工具链..."
+              className="w-full bg-transparent border-none text-slate-200 placeholder-slate-500 px-4 py-3 focus:ring-0 resize-none h-24 font-light text-base"
+            />
+            
+            <div className="absolute bottom-3 right-3">
+              <button className={`${styles.primaryGradient} text-white p-2 rounded-lg shadow-lg shadow-blue-600/20 transition-transform active:scale-95 flex items-center gap-2 px-4`}>
+                <span className="text-sm font-medium">执行</span>
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-[10px] text-slate-600 mt-2 font-mono">
+            Powered by LLM API Interface • Internal Use Only • Data Encrypted
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// --- Sub-components for Cleanliness ---
+
+const NavItem = ({ icon, label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group ${
+      active 
+        ? "bg-blue-600/20 text-blue-300 border border-blue-500/30" 
+        : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+    }`}
+  >
+    <div className={`${active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"}`}>
+      {React.cloneElement(icon, { size: 20 })}
+    </div>
+    <span className="hidden lg:block text-sm font-medium">{label}</span>
+  </button>
+);
+
+const QuickAction = ({ title, desc, icon }) => (
+  <button className="flex flex-col items-start p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800 hover:border-blue-500/30 transition-all text-left group">
+    <div className="mb-3 p-2 rounded-lg bg-slate-900 border border-slate-700 group-hover:border-blue-500/30 shadow-sm">
+      {icon}
+    </div>
+    <h3 className="text-slate-200 font-medium mb-1">{title}</h3>
+    <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+  </button>
+);
+
+const ToolButton = ({ icon, tooltip }) => (
+  <button className="p-1.5 rounded-md text-slate-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors">
+    {React.cloneElement(icon, { size: 16 })}
+  </button>
+);
+
+export default GovTechUI;
