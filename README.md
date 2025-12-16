@@ -52,7 +52,12 @@ npm run dev
 
 ## Poe API 使用说明
 
-服务端通过 `openai` SDK 以 `baseURL=https://api.poe.com/v1` 调用：
+服务端通过 `openai` SDK 以 `baseURL=https://api.poe.com/v1` 调用（可通过环境变量覆盖和配置代理）：
+
+- `POE_API_KEY`：Poe API Key，必填，否则接口直接返回错误提示。
+- `POE_BASE_URL`：可选，默认 `https://api.poe.com/v1`。
+- `POE_PROXY` / `HTTPS_PROXY`：可选，若内网需代理访问 Poe，请设置代理地址（如 `http://127.0.0.1:7890`），服务器会自动创建代理 Agent。
+- `POE_TIMEOUT_MS`：可选，请求超时时间，默认 30000ms。
 
 ```js
 const response = await client.chat.completions.create({
@@ -66,3 +71,12 @@ const response = await client.chat.completions.create({
 ```
 
 前端的多模型选择与模式切换均与此路由保持一致，确保 UI “执行”按钮可直接联通后端接口完成真实调研、润色或舆情查询。
+
+### 常见连通性排查
+
+1. 确认 `POE_API_KEY` 已设置；请求缺 key 会直接返回 400。
+2. 若出现 `ETIMEDOUT` 或无法连接，尝试：
+   - 设置 `POE_PROXY`/`HTTPS_PROXY` 走可用代理；
+   - 若目标网关需自定义，调整 `POE_BASE_URL`；
+   - 增大 `POE_TIMEOUT_MS` 以适配慢网络。
+3. 服务器已在错误响应中回传 `error`、`details` 与 `requestId`，可以在前端提示中看到具体原因，便于排查。

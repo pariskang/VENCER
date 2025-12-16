@@ -1,14 +1,23 @@
 import express from 'express';
 import OpenAI from 'openai';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const app = express();
 const port = process.env.PORT || 4000;
+const baseURL = process.env.POE_BASE_URL || 'https://api.poe.com/v1';
+const proxyUrl = process.env.POE_PROXY || process.env.HTTPS_PROXY;
+const timeoutMs = Number(process.env.POE_TIMEOUT_MS || 30000);
 
 app.use(express.json({ limit: '2mb' }));
 
+const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+
 const client = new OpenAI({
   apiKey: process.env.POE_API_KEY,
-  baseURL: 'https://api.poe.com/v1'
+  baseURL,
+  httpAgent: agent,
+  httpsAgent: agent,
+  timeout: timeoutMs
 });
 
 const SIDE_PANEL_TEMPLATE = {
@@ -19,6 +28,10 @@ const SIDE_PANEL_TEMPLATE = {
 
 app.post('/api/chat', async (req, res) => {
   const { prompt, mode = 'chat', model = 'Gemini-3-Pro', attachments = [] } = req.body;
+
+  if (!process.env.POE_API_KEY) {
+    return res.status(400).json({ error: 'POE_API_KEY 未设置，请在环境变量或 .env 文件中配置。' });
+  }
 
   if (!prompt) {
     return res.status(400).json({ error: '缺少 prompt 参数' });
@@ -62,7 +75,11 @@ app.post('/api/chat', async (req, res) => {
     res.json(payload);
   } catch (error) {
     console.error('chat error', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: error.message,
+      details: error?.cause?.message || error?.code,
+      requestId: error?.request_id
+    });
   }
 });
 

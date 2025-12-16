@@ -38,9 +38,11 @@ export function useChatClient() {
         setSideData(data.sidePanel);
       }
     } catch (error) {
+      const apiError = error.response?.data?.error || error.message;
+      const detail = error.response?.data?.details;
       appendMessage({
         role: 'assistant',
-        content: `请求失败：${error.response?.data?.error || error.message}`,
+        content: `请求失败：${apiError}${detail ? `（${detail}）` : ''}`,
         error: true,
         timestamp: Date.now()
       });
