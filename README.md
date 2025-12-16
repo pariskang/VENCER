@@ -1,2 +1,68 @@
 # VENCER
+
 文以载道，策定未来 (Scripting the Logic of Governance)
+
+VENCER 是一个面向政务场景的对话交互应用，集成了舆情查询、文档润色、政策文献调研等多模态能力，并可通过统一的 Poe API 路由到 GPT-4o-mini-Search、DeepSeek-V3.2 与 Claude-Haiku-3.5-Search 等模型。
+
+## 快速开始
+
+1. 安装依赖
+
+```bash
+npm install
+```
+
+2. 配置环境变量
+
+```bash
+cp .env.example .env
+# 将 POE_API_KEY 替换为实际密钥
+```
+
+3. 启动后端接口 (Express + Poe API 代理)
+
+```bash
+npm run start:server
+```
+
+4. 启动前端 (Vite + React + Tailwind)
+
+```bash
+npm run dev
+```
+
+默认开发端口：前端 5173，后端 4000（Vite 已配置 API 代理）。
+
+## 交互模式与模型映射
+
+| 模式 | 描述 | 默认模型 |
+| --- | --- | --- |
+| 舆情监测 | 实时查询网络热度趋势 | GPT-4o-mini-Search（启用 web_search） |
+| 文档润色 | 公文措辞与结构优化 | DeepSeek-V3.2 |
+| 文献调研 | 政策法规检索并返回来源卡片 | Claude-Haiku-3.5-Search（启用 web_search） |
+| 合规审查 | 风险点审查与逻辑核查 | Gemini-3-Pro |
+| 通用对话 | 综合智能问答 | Gemini-3-Pro |
+
+## 文件结构
+
+- `src/App.jsx`：核心布局（功能导航、对话流、侧边 Copilot 面板）及 UI 交互逻辑。
+- `src/hooks/useChatClient.js`：统一消息发送与侧边面板数据管理，自动根据模式路由模型。
+- `server/index.js`：Express 服务封装 Poe API 调用示例，并为不同模式返回示例侧栏数据。
+- `tailwind.config.js` / `postcss.config.js` / `src/index.css`：样式系统。
+
+## Poe API 使用说明
+
+服务端通过 `openai` SDK 以 `baseURL=https://api.poe.com/v1` 调用：
+
+```js
+const response = await client.chat.completions.create({
+  model: 'Claude-Haiku-3.5-Search',
+  messages: [
+    { role: 'system', content: 'VENCER 对话助手' },
+    { role: 'user', content: '请检索数字经济相关政策' }
+  ],
+  extra_body: { web_search: true }
+});
+```
+
+前端的多模型选择与模式切换均与此路由保持一致，确保 UI “执行”按钮可直接联通后端接口完成真实调研、润色或舆情查询。
