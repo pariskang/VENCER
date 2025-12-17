@@ -12,14 +12,6 @@ app.use(express.json({ limit: '2mb' }));
 
 const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
-const client = new OpenAI({
-  apiKey: process.env.POE_API_KEY,
-  baseURL,
-  httpAgent: agent,
-  httpsAgent: agent,
-  timeout: timeoutMs
-});
-
 const SIDE_PANEL_TEMPLATE = {
   opinion: (data) => ({ type: 'trend', data }),
   polish: (data) => ({ type: 'diff', data }),
@@ -27,10 +19,12 @@ const SIDE_PANEL_TEMPLATE = {
 };
 
 app.post('/api/chat', async (req, res) => {
-  const { prompt, mode = 'chat', model = 'Gemini-3-Pro', attachments = [] } = req.body;
+  const { prompt, mode = 'chat', model = 'Gemini-3-Pro', attachments = [], poeKey, history = [] } = req.body;
 
-  if (!process.env.POE_API_KEY) {
-    return res.status(400).json({ error: 'POE_API_KEY 未设置，请在环境变量或 .env 文件中配置。' });
+  const apiKey = poeKey || process.env.POE_API_KEY;
+
+  if (!apiKey) {
+    return res.status(400).json({ error: '缺少 Poe API Key，请在前端输入或在服务器设置 POE_API_KEY。' });
   }
 
   if (!prompt) {
@@ -38,8 +32,21 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
+    const client = new OpenAI({
+      apiKey,
+      baseURL,
+      httpAgent: agent,
+      httpsAgent: agent,
+      timeout: timeoutMs
+    });
+
+    const historyMessages = Array.isArray(history)
+      ? history.map((item) => ({ role: item.role, content: item.content })).filter((m) => m.role && m.content)
+      : [];
+
     const messages = [
       { role: 'system', content: 'VENCER - 文以载道，策定未来 (Scripting the Logic of Governance).' },
+      ...historyMessages,
       { role: 'user', content: prompt }
     ];
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bot,
   Send,
@@ -42,9 +42,23 @@ const MODEL_OPTIONS = [
 function App() {
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
   const [input, setInput] = useState('');
-  const [mode, setMode] = useState('chat');
   const [attachments, setAttachments] = useState([]);
-  const { messages, loading, sideData, sendMessage } = useChatClient();
+  const {
+    activeMode: mode,
+    setActiveMode,
+    messages,
+    loading,
+    sideData,
+    sendMessage,
+    poeKey,
+    setPoeKey,
+    downloadConversation
+  } = useChatClient();
+  const [poeKeyInput, setPoeKeyInput] = useState(poeKey);
+
+  useEffect(() => {
+    setPoeKeyInput(poeKey);
+  }, [poeKey]);
 
   const headerStatus = useMemo(() => MODE_META[mode] ?? MODE_META.chat, [mode]);
 
@@ -52,6 +66,7 @@ function App() {
     if (!input.trim()) return;
     await sendMessage({ content: input, mode, model: selectedModel, attachments });
     setInput('');
+    setAttachments([]);
   };
 
   const handleFile = (event) => {
@@ -71,11 +86,11 @@ function App() {
           </div>
 
           <nav className="space-y-2">
-            <NavItem icon={<Sparkles />} label="智能润色" active={mode === 'polish'} onClick={() => setMode('polish')} />
-            <NavItem icon={<FileSearch />} label="文献调研" active={mode === 'search'} onClick={() => setMode('search')} />
-            <NavItem icon={<ShieldAlert />} label="合规审查" active={mode === 'audit'} onClick={() => setMode('audit')} />
-            <NavItem icon={<Globe />} label="舆情监测" active={mode === 'opinion'} onClick={() => setMode('opinion')} />
-            <NavItem icon={<Command />} label="通用对话" active={mode === 'chat'} onClick={() => setMode('chat')} />
+            <NavItem icon={<Sparkles />} label="智能润色" active={mode === 'polish'} onClick={() => setActiveMode('polish')} />
+            <NavItem icon={<FileSearch />} label="文献调研" active={mode === 'search'} onClick={() => setActiveMode('search')} />
+            <NavItem icon={<ShieldAlert />} label="合规审查" active={mode === 'audit'} onClick={() => setActiveMode('audit')} />
+            <NavItem icon={<Globe />} label="舆情监测" active={mode === 'opinion'} onClick={() => setActiveMode('opinion')} />
+            <NavItem icon={<Command />} label="通用对话" active={mode === 'chat'} onClick={() => setActiveMode('chat')} />
           </nav>
         </div>
 
@@ -112,6 +127,27 @@ function App() {
             <span className="text-xs text-slate-500 hidden sm:block">{headerStatus.description}</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="hidden md:flex items-center gap-2">
+              <input
+                value={poeKeyInput}
+                onChange={(e) => setPoeKeyInput(e.target.value)}
+                type="password"
+                placeholder="输入 Poe API Key"
+                className="px-2 py-1 rounded bg-slate-800 border border-slate-600 text-[11px] text-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40"
+              />
+              <button
+                onClick={() => setPoeKey(poeKeyInput.trim())}
+                className="px-2 py-1 rounded bg-blue-600/70 text-white text-[11px] hover:bg-blue-500 transition-colors"
+              >
+                保存Key
+              </button>
+            </div>
+            <button
+              onClick={() => downloadConversation(mode)}
+              className="px-2 py-1 rounded bg-slate-800 border border-slate-600 text-[11px] hover:border-blue-400"
+            >
+              导出Markdown
+            </button>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/30 text-blue-400 border border-blue-800">SECURE</span>
             <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-400"></span>Latency 45ms</span>
           </div>
@@ -120,9 +156,11 @@ function App() {
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-700">
             {messages.length === 0 ? (
-              <WelcomeState onQuickSelect={setMode} />
+              <WelcomeState onQuickSelect={setActiveMode} />
             ) : (
-              messages.map((message) => <MessageBubble key={message.timestamp} message={message} loading={loading} />)
+              messages.map((message, idx) => (
+                <MessageBubble key={message.timestamp || idx} message={message} loading={loading} />
+              ))
             )}
           </div>
 

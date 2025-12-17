@@ -12,11 +12,12 @@ VENCER 是一个面向政务场景的对话交互应用，集成了舆情查询�
 npm install
 ```
 
-2. 配置环境变量
+2. 配置密钥（两种方式，二选一）
 
 ```bash
 cp .env.example .env
-# 将 POE_API_KEY 替换为实际密钥
+# 方式A：在 .env 中设置 POE_API_KEY
+# 方式B：跳过此步，启动后在前端右上角输入 Poe API Key（仅保存在浏览器）
 ```
 
 3. 启动后端接口 (Express + Poe API 代理)
@@ -42,6 +43,13 @@ npm run dev
 | 文献调研 | 政策法规检索并返回来源卡片 | Claude-Haiku-3.5-Search（启用 web_search） |
 | 合规审查 | 风险点审查与逻辑核查 | Gemini-3-Pro |
 | 通用对话 | 综合智能问答 | Gemini-3-Pro |
+
+## 多轮对话与会话留存
+
+- 前端为每个功能模式维护独立对话线程，切换页面不会丢失历史记录。
+- 发送消息时会将该模式的过往对话作为 `history` 一并提交给后端，实现真正的多轮上下文。
+- 手动输入的 Poe API Key 以及各模式对话都会保存在浏览器 localStorage（仅本地），方便刷新或二次打开继续使用。
+- 点击头部的 “导出Markdown” 按钮，可将当前模式的对话记录下载为 `.md` 文件留档。
 
 ## 文件结构
 
@@ -72,9 +80,11 @@ const response = await client.chat.completions.create({
 
 前端的多模型选择与模式切换均与此路由保持一致，确保 UI “执行”按钮可直接联通后端接口完成真实调研、润色或舆情查询。
 
+- `/api/chat` 请求体默认包含 `poeKey`（手动输入的密钥）与 `history`（当前模式历史消息），后端会优先使用手动密钥，否则退回到环境变量 `POE_API_KEY`。
+
 ### 常见连通性排查
 
-1. 确认 `POE_API_KEY` 已设置；请求缺 key 会直接返回 400。
+1. 确认已在前端输入 Poe API Key 或设置 `POE_API_KEY`；缺少密钥会直接返回 400。
 2. 若出现 `ETIMEDOUT` 或无法连接，尝试：
    - 设置 `POE_PROXY`/`HTTPS_PROXY` 走可用代理；
    - 若目标网关需自定义，调整 `POE_BASE_URL`；
